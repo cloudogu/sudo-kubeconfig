@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-if [[ ! -z "${DEBUG}" ]]; then set -x; fi
+if [[ -n "${DEBUG}" ]]; then set -x; fi
 set -o errexit -o nounset -o pipefail
 
 # Creates a sudo kubeconfig for the current context
@@ -7,7 +7,7 @@ set -o errexit -o nounset -o pipefail
 # 
 # Options can be passed via env vars:
 # * SUDO_PREFIX - Prefix added to current kubecontext and user to flag it as "sudo". Default: SUDO-
-# * SUDO_CONTEXT_POSTFIX - Postfix added to current kubecontext to raise attention to it being for sudo only. Default: -:-O
+# * SUDO_CONTEXT_POSTFIX - Postfix added to current kubecontext to raise attention to it being for sudo only. Default: empty.
 # * DEBUG - prints echo of commands (set -x)
 
 # Note: Keep it simple to allow auto completion with '--context='
@@ -83,6 +83,7 @@ function printOrAddKubeconfig() {
     printStdErr "Hint 2: Also works with helm --kube-context, k9s --context, fluxctl --context, istictl, etc."
   else 
     cat "$sudoConfig"
+    printStdErr 
     printStdErr "Pipe content to file an 'export KUBECONFIG=file' to use kubeconfig"
   fi
 }

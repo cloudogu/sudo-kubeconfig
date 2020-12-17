@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  # This group facilitates "kubectl sudo" or usage of a sudo context. 
+  # For details see
+  # * https://github.com/cloudogu/sudo-kubeconfig
+  # * https://github.com/postfinance/kubectl-sudo
+  name: sudoer
+rules:
+  - apiGroups: [""]
+    verbs: ["impersonate"]
+    resources: ["users", "groups", "serviceaccounts"]

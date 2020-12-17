@@ -3,6 +3,8 @@ cloudogu/sudo-kubeconfig
 
 Create a sudo kubeconfig for your current kubernetes context.
 
+<img src="https://github.com/cloudogu/sudo-kubeconfig/wiki/sudo-kubeconfig.gif" alt="Demo gif" width="516" height="309"> 
+
 ## Motivation
 
 The [kubectl sudo](https://github.com/postfinance/kubectl-sudo) plugin describes a powerful concept to prevent accidental
@@ -10,7 +12,7 @@ The [kubectl sudo](https://github.com/postfinance/kubectl-sudo) plugin describes
 
 `kubectl sudo` implements this as a plugin to `kubectl`. This provides a good developer experience but is restricted to
 `kubectl. `
-What about other CLIs that rely on kubeconfig such as helm, k9s, fluxctl, istioctl, etc.? Can this mechanism be used 
+What about other CLIs that rely on kubeconfig such as helm, k9s, velero, fluxctl, istioctl, etc.? Can this mechanism be used 
 for them as well? 
 This provides an option for that: a "sudo-context".
 The sudo-context is a duplicate of your usual context in kubeconfig that uses the same cluster but a different user.
@@ -30,9 +32,20 @@ chmod +x /tmp/create-sudo-kubeconfig.sh
 
 ## Using a sudo-context
 
-Before you begin, make sure to
-* create and impersonator `ClusterRole` and appropriate `ClusterRoleBinding`s as described in [kubectl-sudo](https://github.com/postfinance/kubectl-sudo),
-* restrict your user to read-only permissions (e.g. using the built-in `viewer` clusterrole)
+See bellow for an example using local KIND/k3s/k3d cluster.
+
+* Create an impersonator `ClusterRole` (see [kubectl-sudo](https://github.com/postfinance/kubectl-sudo) for details of the concept)
+  `kubectl apply -f "https://github.com/cloudogu/sudo-kubeconfig/blob/${SUDO_KUBECONTEXT_VERSION}/clusterrole-sudoer.yaml"`
+* Authorize users via `ClusterRoleBinding`, e.g. like 
+  `kubectl create clusterrolebinding cluster-sudoers --clusterrole=sudoer --user=you`
+* Restrict your user to read-only permissions (e.g. using the built-in `viewer` clusterrole)
+* Create sudo-kubeconfig
+```shell
+SUDO_KUBECONTEXT_VERSION=0.1.0
+wget -P /tmp/ "https://raw.githubusercontent.com/cloudogu/sudo-kubeconfig/${SUDO_KUBECONTEXT_VERSION}/create-sudo-kubeconfig.sh"
+chmod +x /tmp/create-sudo-kubeconfig.sh
+/tmp/create-sudo-kubeconfig.sh
+```
 
 Once you created a sudo context, you can use it like so:
 
@@ -52,6 +65,50 @@ kubectl--context SUDO-context  # Hint use auto completion for the context
 kgpo --context SUDO-context
 #  ... and plugins
 kubectl whoami --context SUDO-context
+```
+
+## Trying sudo-kubeconfig in KIND, k3s/k3d
+
+The kubeconfig used by k3s/k3d and KIND uses a client cert that already is in the `system:masters` group. This makes it 
+difficult to restrict privileges using RBAC.
+
+One option to try out sudo-kubeconfig is to create a service account and authenticate with its token.
+
+```shell
+# Preparations
+# Create unprivileged service account
+kubectl create sa unpriv --namespace default
+# Enable sudo for service account
+kubectl create clusterrolebinding cluster-sudoers \
+    --clusterrole=sudoer \
+    --serviceaccount=default:unpriv
+# Optional: Allow read-only access by default
+kubectl create clusterrolebinding cluster-viewers \
+    --clusterrole=view \
+    --serviceaccount=default:unpriv
+
+# Create kubeconfig to authenticate using service account's token
+wget -P /tmp https://raw.githubusercontent.com/zlabjp/kubernetes-scripts/4ed8/create-kubeconfig
+chmod +x /tmp/create-kubeconfig
+tmpConfig=$(mktemp)
+/tmp/create-kubeconfig unpriv --namespace=default > ${tmpConfig}
+export KUBECONFIG=${tmpConfig}
+
+./create-sudo-kubeconfig.sh
+
+# Fails with
+# error: failed to create deployment: deployments.apps is forbidden: User "system:serviceaccount:default:unpriv" cannot create resource "deployments" in API group "apps" in the namespace "default"
+kubectl create deployment nginx --image=nginx
+# Success: deployment.apps/nginx created
+kubectl create deploy nginx --image=nginx --context=SUDO-kind 
+
+# Fail
+helm install nginx bitnami/nginx
+# Success
+helm install nginx bitnami/nginx --kube-context=SUDO-kind 
+
+# Reset to default kubeconfig
+unset KUBECONFIG
 ```
 
 ## Options

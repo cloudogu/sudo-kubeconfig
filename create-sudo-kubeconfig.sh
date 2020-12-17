@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 if [[ -n "${DEBUG}" ]]; then set -x; fi
-set -o errexit -o nounset -o pipefail
 
 # Creates a sudo kubeconfig for the current context
 # Result is either printed to stdout or added to current KUBECONFIG (queried interactively)
@@ -14,6 +13,9 @@ set -o errexit -o nounset -o pipefail
 SUDO_PREFIX=${SUDO_PREFIX:-'SUDO-'}
 # Note: Be careful with this - emojis lead to escaping with kubectx, exclamation mark are special chars in shell, etc
 SUDO_CONTEXT_POSTFIX=${SUDO_CONTEXT_POSTFIX:-''} # How about '-:-O'? 
+KUBECONFIG_PATH=${KUBECONFIG:-"$HOME/.kube/config"}
+
+set -o errexit -o nounset -o pipefail
 
 context=$(kubectl config current-context)
 user=$(kubectl config view -o "jsonpath={.contexts[?(@.name==\"$context\")].context.user}")
@@ -36,9 +38,11 @@ function main() {
   
   printOrAddKubeconfig "${sudoConfig}"
   
-  unset KUBECONFIG
   # Reset to non-sudo context, because using the sudo context is only meant to be used explicitly via --context
-  kubectl config use-context "$context" > /dev/null
+  # Do it twice, in case no KUBECONFIG was set before
+  kubectl config use-context "$context" > /dev/null 2&>1
+  unset KUBECONFIG
+  kubectl config use-context "$context" > /dev/null 2&>1
 }
 
 function extractCurrentContextAndAddSudoUser() {
@@ -53,7 +57,7 @@ function extractCurrentContextAndAddSudoUser() {
     
   # Fail when sed failed
   grep "$SUDO_PREFIX$user" "$tmpConfig" > /dev/null || (echo "Failed to create sudo user in kubeconfig. Run with DEBUG=true for details" && return 1)
-  export KUBECONFIG=${tmpConfig}:~/.kube/config 
+  export KUBECONFIG="${tmpConfig}:${KUBECONFIG_PATH}"
 }
 
 function createAndActivateContextWithSudoUser() {
@@ -69,14 +73,14 @@ function createCleanSudoKubeconfig() {
 }
 
 function printOrAddKubeconfig() {
-  if confirm "Add context '$SUDO_PREFIX$context$SUDO_CONTEXT_POSTFIX' to $HOME/.kube/config?" "Otherwise print to stdout" "y/n [n]"; then
-    backup="$HOME/.kube/config.bck-$(date +%s)"
+  if confirm "Add context '$SUDO_PREFIX$context$SUDO_CONTEXT_POSTFIX' to ${KUBECONFIG_PATH}?" "Otherwise print to stdout" "y/n [n]"; then
+    backup="KUBECONFIG_PATH.bck-$(date +%s)"
     printStdErr "Creating backup at $backup"
-    cp ~/.kube/config "$backup"
+    cp "${KUBECONFIG_PATH}" "$backup"
     
     printStdErr
-    KUBECONFIG=${sudoConfig}:~/.kube/config kubectl config view --flatten >~/.kube/config2 && mv ~/.kube/config2 ~/.kube/config
-    chmod 700 ~/.kube/config
+    KUBECONFIG=${sudoConfig}:"${KUBECONFIG_PATH}" kubectl config view --flatten >"${KUBECONFIG_PATH}"2 && mv "${KUBECONFIG_PATH}"2 "${KUBECONFIG_PATH}"
+    chmod 700 "${KUBECONFIG_PATH}"
     
     printStdErr "Use sudo-kubecontext with 'kubectl --context=$SUDO_PREFIX$context$SUDO_CONTEXT_POSTFIX'"
     printStdErr "Hint 1: Use auto completion for the context"

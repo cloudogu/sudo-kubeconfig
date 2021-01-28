@@ -7,14 +7,13 @@ Create a sudo kubeconfig for your current kubernetes context.
 
 ## Motivation
 
-The [kubectl sudo](https://github.com/postfinance/kubectl-sudo) plugin describes a powerful concept to prevent accidental
-`kubectl apply` to clusters: Using kuberentes' `impersonate` functionality as a `sudo` mechanism.
+The [kubectl sudo](https://github.com/postfinance/kubectl-sudo) and [helm sudo](https://github.com/cloudogu/helm-sudo) plugins use a powerful concept to prevent accidental `kubectl apply` or `helm install` to clusters: Using kuberentes' `impersonate` functionality as a `sudo` mechanism.
 
-`kubectl sudo` implements this as a plugin to `kubectl`. This provides a good developer experience but is restricted to
-`kubectl. `
-What about other CLIs that rely on kubeconfig such as helm, k9s, velero, fluxctl, istioctl, etc.? Can this mechanism be used 
+The plugins provide a good developer experience but are restricted to `kubectl` and `helm`.
+
+What about other CLIs that rely on kubeconfig such as k9s, velero, fluxctl, istioctl, etc.? Can this mechanism be used 
 for them as well? 
-This provides an option for that: a "sudo-context".
+This repo provides an option for that: a "sudo-context".
 The sudo-context is a duplicate of your usual context in kubeconfig that uses the same cluster but a different user.
 This user sets `as` and `as-groups` just like `kubectl sudo` does.
 
@@ -50,14 +49,15 @@ chmod +x /tmp/create-sudo-kubeconfig.sh
 Once you created a sudo context, you can use it like so:
 
 ```shell
-helm --kube-context SUDO-context # Hint use auto completion for the context
 fluxctl --context SUDO-context     
 k9s --context SUDO-context #  Hint: You can also change the context from within k9s using ":ctx"
 ```
 
-It's good practice *not* to use the "sudo context" as current context, but to use it explicitly via an additional parameter.
+⚠️ Please note
+* The SUDO-context also contains a namespace. This might be different from your current context. So: better your `-n` in your commands or kubernetes ressources, or use `kubectl sudo` and `helm sudo` plugins.
+* It's good practice *not* to use the "sudo context" as current context, but to use it explicitly via an additional parameter.
 
-By the way, you can also use this context for kubectl, as an alternative to `kubectl sudo` plugin:
+By the way, you can also use this context for kubectl or helm, as an alternative to `kubectl sudo` plugin:
 
 ```shell
 kubectl--context SUDO-context  # Hint use auto completion for the context
@@ -65,6 +65,7 @@ kubectl--context SUDO-context  # Hint use auto completion for the context
 kgpo --context SUDO-context
 #  ... and plugins
 kubectl whoami --context SUDO-context
+helm --kube-context SUDO-context # Hint use auto completion for the context
 ```
 
 ## Trying sudo-kubeconfig in KIND, k3s/k3d

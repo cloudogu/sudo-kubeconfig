@@ -27,7 +27,7 @@ One option for creating a "sudo context" is [create-sudo-kubeconfig.sh](create-s
 It guides you through the "sudo context" creation interactively.
 
 ```shell
-SUDO_KUBECONTEXT_VERSION=0.1.0
+SUDO_KUBECONTEXT_VERSION=0.1.1
 wget -P /tmp/ "https://raw.githubusercontent.com/cloudogu/sudo-kubeconfig/${SUDO_KUBECONTEXT_VERSION}/create-sudo-kubeconfig.sh"
 chmod +x /tmp/create-sudo-kubeconfig.sh
 /tmp/create-sudo-kubeconfig.sh
@@ -38,13 +38,13 @@ chmod +x /tmp/create-sudo-kubeconfig.sh
 See bellow for an example using local KIND/k3s/k3d cluster.
 
 * Create an impersonator `ClusterRole` (see [kubectl-sudo](https://github.com/postfinance/kubectl-sudo) for details of the concept)
-  `kubectl apply -f "https://github.com/cloudogu/sudo-kubeconfig/blob/${SUDO_KUBECONTEXT_VERSION}/clusterrole-sudoer.yaml"`
+  `kubectl apply -f "https://raw.githubusercontent.com/cloudogu/sudo-kubeconfig/${SUDO_KUBECONTEXT_VERSION}/clusterrole-sudoer.yaml"`
 * Authorize users via `ClusterRoleBinding`, e.g. like 
   `kubectl create clusterrolebinding cluster-sudoers --clusterrole=sudoer --user=you`
 * Restrict your user to read-only permissions (e.g. using the built-in `viewer` clusterrole)
 * Create sudo-kubeconfig
 ```shell
-SUDO_KUBECONTEXT_VERSION=0.1.0
+SUDO_KUBECONTEXT_VERSION=0.1.1
 wget -P /tmp/ "https://raw.githubusercontent.com/cloudogu/sudo-kubeconfig/${SUDO_KUBECONTEXT_VERSION}/create-sudo-kubeconfig.sh"
 chmod +x /tmp/create-sudo-kubeconfig.sh
 /tmp/create-sudo-kubeconfig.sh

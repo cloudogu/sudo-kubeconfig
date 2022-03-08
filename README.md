@@ -5,6 +5,10 @@ Create a sudo kubeconfig for your current kubernetes context.
 
 <img src="https://github.com/cloudogu/sudo-kubeconfig/wiki/sudo-kubeconfig.gif" alt="Demo gif" width="516" height="309"> 
 
+For questions or suggestions you are welcome to join us at our myCloudogu [community forum](https://community.cloudogu.com/c/kubernetes/54).
+
+[![Discuss it on myCloudogu](https://static.cloudogu.com/static/images/discuss-it.png)](https://community.cloudogu.com/c/kubernetes/54)
+
 ## Motivation
 
 The [kubectl sudo](https://github.com/postfinance/kubectl-sudo) and [helm sudo](https://github.com/cloudogu/helm-sudo) plugins use a powerful concept to prevent accidental `kubectl apply` or `helm install` to clusters: Using kuberentes' `impersonate` functionality as a `sudo` mechanism.

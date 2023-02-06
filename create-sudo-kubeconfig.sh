@@ -40,9 +40,9 @@ function main() {
   
   # Reset to non-sudo context, because using the sudo context is only meant to be used explicitly via --context
   # Do it twice, in case no KUBECONFIG was set before
-  kubectl config use-context "$context" > /dev/null 2&>1
+  kubectl config use-context "$context" > /dev/null 2>&1
   unset KUBECONFIG
-  kubectl config use-context "$context" > /dev/null 2&>1
+  kubectl config use-context "$context" > /dev/null 2>&1
 }
 
 function extractCurrentContextAndAddSudoUser() {
@@ -74,7 +74,7 @@ function createCleanSudoKubeconfig() {
 
 function printOrAddKubeconfig() {
   if confirm "Add context '$SUDO_PREFIX$context$SUDO_CONTEXT_POSTFIX' to ${KUBECONFIG_PATH}?" "Otherwise print to stdout" "y/n [n]"; then
-    backup="KUBECONFIG_PATH.bck-$(date +%s)"
+    backup="${KUBECONFIG_PATH}.bck-$(date +%s)"
     printStdErr "Creating backup at $backup"
     cp "${KUBECONFIG_PATH}" "$backup"
     

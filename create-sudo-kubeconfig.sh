@@ -40,9 +40,9 @@ function main() {
   
   # Reset to non-sudo context, because using the sudo context is only meant to be used explicitly via --context
   # Do it twice, in case no KUBECONFIG was set before
-  kubectl config use-context "$context" > /dev/null 2&>1
+  kubectl config use-context "$context" > /dev/null 2>&1
   unset KUBECONFIG
-  kubectl config use-context "$context" > /dev/null 2&>1
+  kubectl config use-context "$context" > /dev/null 2>&1
 }
 
 function extractCurrentContextAndAddSudoUser() {
